@@ -19,7 +19,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.*
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.google.gson.Gson
@@ -36,6 +35,23 @@ class QSTile : TileService() {
     private val ACTION_EDIT_NOTE = "de.dlyt.yanndroid.notinotes.EDIT_NOTE"
     private val ACTION_DELETE_NOTE = "de.dlyt.yanndroid.notinotes.DELETE_NOTE"
 
+    var COLORS = intArrayOf(
+        R.color.color_1,
+        R.color.color_2,
+        R.color.color_3,
+        R.color.color_4,
+        R.color.color_5,
+        R.color.color_6
+    )
+    var RBIDS = intArrayOf(
+        R.id.color_1,
+        R.id.color_2,
+        R.id.color_3,
+        R.id.color_4,
+        R.id.color_5,
+        R.id.color_6
+    )
+
     private val context: Context = this
     private var notes: ArrayList<Note> = ArrayList()
     private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
@@ -49,9 +65,10 @@ class QSTile : TileService() {
         }
     }
 
-    class Note(title: String?, content: String?, id: Int) : Serializable {
+    class Note(title: String?, content: String?, colorIndex: Int, id: Int) : Serializable {
         var title = title
         var content = content
+        var colorIndex = colorIndex
         var id = id
     }
 
@@ -86,11 +103,12 @@ class QSTile : TileService() {
         NotificationManagerCompat.from(this).cancelAll()
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     override fun onStartListening() {
         super.onStartListening()
-        qsTile.subtitle = notes.size.toString()
-        qsTile.updateTile()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            qsTile.subtitle = notes.size.toString()
+            qsTile.updateTile()
+        }
     }
 
     override fun onDestroy() {
@@ -101,7 +119,7 @@ class QSTile : TileService() {
 
     override fun onClick() {
         super.onClick()
-        editNotePopup(Note(null, null, generateNewNoteID()))
+        editNotePopup(Note(null, null, 0, generateNewNoteID()))
     }
 
     private fun saveNote(note: Note) {
@@ -154,18 +172,26 @@ class QSTile : TileService() {
         val pNote = pView.findViewById<EditText>(R.id.pNote)
         val pSave = pView.findViewById<Button>(R.id.pSave)
         val pCancel = pView.findViewById<Button>(R.id.pCancel)
+        val pColorPicker = pView.findViewById<RadioGroup>(R.id.color_picker)
 
         pTitle.setText(note.title)
         pNote.setText(note.content)
         pSave.setOnClickListener {
             note.title = pTitle.text.toString()
             note.content = pNote.text.toString()
+            note.colorIndex = RBIDS.indexOf(pColorPicker.checkedRadioButtonId)
             saveNote(note)
             windowManager.removeView(pView)
         }
 
         pCancel.setOnClickListener { windowManager.removeView(pView) }
         pView.setOnClickListener { windowManager.removeView(pView) }
+
+        pColorPicker.setOnCheckedChangeListener { radioGroup, i ->
+            pSave.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
+            pCancel.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
+        }
+        pColorPicker.check(RBIDS[note.colorIndex])
     }
 
     private fun deleteNoteDialog(note: Note) {
@@ -201,6 +227,9 @@ class QSTile : TileService() {
 
         pCancel.setOnClickListener { windowManager.removeView(pView) }
         pView.setOnClickListener { windowManager.removeView(pView) }
+
+        pDelete.setTextColor(getColor(COLORS[note.colorIndex]))
+        pCancel.setTextColor(getColor(COLORS[note.colorIndex]))
     }
 
     private fun showNotification(note: Note) {
@@ -231,7 +260,7 @@ class QSTile : TileService() {
                     getString(R.string.del),
                     getPendingIntent(note, true)
                 )
-                /*.setColor(getColor(R.color.main_color))*/
+                .setColor(getColor(COLORS[note.colorIndex]))
                 .build()
         )
     }
@@ -302,6 +331,9 @@ class QSTile : TileService() {
 
     // #### detail view (samsung only) ####
 
+    fun semGetSettingsIntent(): Intent =
+        Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Yanndroid/NotiNotes"))
+
     fun semIsToggleButtonExists(): Boolean = false
     fun semGetDetailViewTitle(): CharSequence = this.getString(R.string.app_name)
     fun semGetDetailView(): RemoteViews {
@@ -311,6 +343,7 @@ class QSTile : TileService() {
         for (note in notes) {
             val noteView = RemoteViews(context.packageName, R.layout.qs_detail_list_item)
             noteView.setTextViewText(R.id.qs_list_item_title, note.title)
+            noteView.setTextColor(R.id.qs_list_item_title, getColor(COLORS[note.colorIndex]))
             noteView.setTextViewText(R.id.qs_list_item_content, note.content)
             noteView.setOnClickPendingIntent(
                 R.id.qs_list_item_edit,
@@ -325,7 +358,7 @@ class QSTile : TileService() {
 
         remoteViews.setOnClickPendingIntent(
             R.id.qs_detail_add,
-            getPendingIntent(Note(null, null, generateNewNoteID()), false)
+            getPendingIntent(Note(null, null, 0, generateNewNoteID()), false)
         )
         return remoteViews
     }
@@ -341,4 +374,16 @@ class QSTile : TileService() {
             root.addView(LLId, aView)
         }
     }
+
+    /*
+    public final void semFireToggleStateChanged(boolean var1, boolean var2)
+    public RemoteViews semGetDetailView()
+    public CharSequence semGetDetailViewSettingButtonName()
+    public CharSequence semGetDetailViewTitle()
+    public Intent semGetSettingsIntent()
+    public boolean semIsToggleButtonChecked()
+    public boolean semIsToggleButtonExists()
+    public void semSetToggleButtonChecked(boolean var1)
+    public final void semUpdateDetailView()
+    */
 }

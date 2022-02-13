@@ -3,4 +3,12 @@
     <color name="ripple_color">#1a000000</color>
     <color name="popup_divider_color">#ffe6e6e6</color>
     <color name="divider_color">#ff979797</color>
+
+    <color name="color_1">#db0000</color>
+    <color name="color_2">#00db58</color>
+    <color name="color_3">#007dfa</color>
+    <color name="color_4">#ffce44</color>
+    <color name="color_5">#8b21ff</color>
+    <color name="color_6">#808080</color>
+
 </resources>
