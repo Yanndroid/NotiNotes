@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/popup_background"
+    android:theme="@style/MainTheme">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="24dp">
+
+        <TextView
+            android:id="@+id/pTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="18dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:textAlignment="viewStart"
+            android:textColor="?android:colorForeground"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbars="vertical">
+
+            <TextView
+                android:id="@+id/pNote"
+                style="?android:textAppearance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:lineSpacingExtra="4dp"
+                android:textAlignment="viewStart"
+                android:textColor="?android:colorForeground" />
+
+        </androidx.core.widget.NestedScrollView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="10dp"
+            android:paddingBottom="20dp">
+
+            <Button
+                android:id="@+id/pCancel"
+                style="@style/PopupButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.0"
+                android:text="@string/cancel" />
+
+            <View
+                android:layout_width="1.0dip"
+                android:layout_height="16.0dip"
+                android:layout_gravity="center_vertical"
+                android:background="@color/popup_divider_color" />
+
+            <Button
+                android:id="@+id/pDelete"
+                style="@style/PopupButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.0"
+                android:text="@string/del" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

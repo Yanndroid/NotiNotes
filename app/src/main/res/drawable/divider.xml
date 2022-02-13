@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:end="24dp"
+        android:gravity="top"
+        android:start="24dp">
+        <shape>
+            <size android:height="1dip" />
+            <solid android:color="@color/divider_color" />
+        </shape>
+    </item>
+</layer-list>

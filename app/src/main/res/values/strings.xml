@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">NotiNotes</string>
+    <string name="edit">Edit</string>
+    <string name="del">Delete</string>
+    <string name="title">Title</string>
+    <string name="note">Note</string>
+    <string name="new_note">New Note</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="notes">Notes</string>
+    <string name="del_x">Delete %s ?</string>
+    <string name="permission_toast">Enable NotiNotes here</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ripple_color">#33ffffff</color>
+    <color name="popup_divider_color">#33e6e6e6</color>
+    <color name="divider_color">#42fafafa</color>
+</resources>
