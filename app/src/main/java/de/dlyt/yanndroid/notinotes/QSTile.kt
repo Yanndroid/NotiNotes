@@ -8,7 +8,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
@@ -17,6 +16,7 @@ import android.service.quicksettings.TileService
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.View
 import android.view.WindowManager
 import android.widget.*
 import androidx.core.app.NotificationCompat
@@ -34,6 +34,7 @@ class QSTile : TileService() {
     private val NOTIFICATION_CHANNEL = "1234"
     private val ACTION_EDIT_NOTE = "de.dlyt.yanndroid.notinotes.EDIT_NOTE"
     private val ACTION_DELETE_NOTE = "de.dlyt.yanndroid.notinotes.DELETE_NOTE"
+    private val ACTION_SHOW_NOTE = "de.dlyt.yanndroid.notinotes.SHOW_NOTE"
 
     var COLORS = intArrayOf(
         R.color.color_1,
@@ -41,7 +42,9 @@ class QSTile : TileService() {
         R.color.color_3,
         R.color.color_4,
         R.color.color_5,
-        R.color.color_6
+        R.color.color_6,
+        R.color.color_7,
+        R.color.color_8
     )
     var RBIDS = intArrayOf(
         R.id.color_1,
@@ -49,18 +52,20 @@ class QSTile : TileService() {
         R.id.color_3,
         R.id.color_4,
         R.id.color_5,
-        R.id.color_6
+        R.id.color_6,
+        R.id.color_7,
+        R.id.color_8
     )
 
     private val context: Context = this
     private var notes: ArrayList<Note> = ArrayList()
     private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            Log.e("mBroadcastReceiver", intent.action.toString())
             val note: Note = (intent.getSerializableExtra(INTENT_EXTRA) ?: return) as Note
             when (intent.action) {
                 ACTION_EDIT_NOTE -> editNotePopup(note)
                 ACTION_DELETE_NOTE -> deleteNoteDialog(note)
+                ACTION_SHOW_NOTE -> showNoteDialog(note)
             }
         }
     }
@@ -72,10 +77,8 @@ class QSTile : TileService() {
         var id = id
     }
 
-    private fun saveNotesToSP() {
-        getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
-            .putString("notes", Gson().toJson(notes)).apply()
-    }
+    private fun saveNotesToSP() = getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
+        .putString("notes", Gson().toJson(notes)).apply()
 
     private fun loadNotesFromSP() {
         notes = Gson().fromJson(
@@ -86,16 +89,16 @@ class QSTile : TileService() {
 
     override fun onCreate() {
         super.onCreate()
+        requestPermission()
         createNotificationChannel()
         loadNotesFromSP()
         for (note in notes) showNotification(note)
 
-        val intentFilter = IntentFilter()
-        intentFilter.addAction(ACTION_EDIT_NOTE)
-        intentFilter.addAction(ACTION_DELETE_NOTE)
-        registerReceiver(mBroadcastReceiver, intentFilter)
-
-        requestPermission()
+        registerReceiver(mBroadcastReceiver, IntentFilter().also {
+            it.addAction(ACTION_EDIT_NOTE)
+            it.addAction(ACTION_DELETE_NOTE)
+            it.addAction(ACTION_SHOW_NOTE)
+        })
     }
 
     override fun onTileRemoved() {
@@ -149,89 +152,6 @@ class QSTile : TileService() {
         }
     }
 
-    private fun editNotePopup(note: Note) {
-        if (!Settings.canDrawOverlays(context)) return
-        closePanel()
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        val params = WindowManager.LayoutParams(
-            ((if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) resources.displayMetrics.widthPixels else resources.displayMetrics.heightPixels) * 0.90).toInt(),
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_DIM_BEHIND or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
-            PixelFormat.TRANSLUCENT
-        )
-        params.windowAnimations = R.style.PopupAnimStyle
-        params.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
-        params.dimAmount = 0.35f
-        params.gravity = Gravity.BOTTOM
-
-        val pView = LayoutInflater.from(context).inflate(R.layout.popup_edit_layout, null)
-        windowManager.addView(pView, params)
-
-        val pTitle = pView.findViewById<EditText>(R.id.pTitle)
-        val pNote = pView.findViewById<EditText>(R.id.pNote)
-        val pSave = pView.findViewById<Button>(R.id.pSave)
-        val pCancel = pView.findViewById<Button>(R.id.pCancel)
-        val pColorPicker = pView.findViewById<RadioGroup>(R.id.color_picker)
-
-        pTitle.setText(note.title)
-        pNote.setText(note.content)
-        pSave.setOnClickListener {
-            note.title = pTitle.text.toString()
-            note.content = pNote.text.toString()
-            note.colorIndex = RBIDS.indexOf(pColorPicker.checkedRadioButtonId)
-            saveNote(note)
-            windowManager.removeView(pView)
-        }
-
-        pCancel.setOnClickListener { windowManager.removeView(pView) }
-        pView.setOnClickListener { windowManager.removeView(pView) }
-
-        pColorPicker.setOnCheckedChangeListener { radioGroup, i ->
-            pSave.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
-            pCancel.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
-        }
-        pColorPicker.check(RBIDS[note.colorIndex])
-    }
-
-    private fun deleteNoteDialog(note: Note) {
-        if (!Settings.canDrawOverlays(context)) return
-        closePanel()
-        val windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
-        val params = WindowManager.LayoutParams(
-            (resources.displayMetrics.widthPixels * 0.90).toInt(),
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_DIM_BEHIND,
-            PixelFormat.TRANSLUCENT
-        )
-        params.windowAnimations = R.style.PopupAnimStyle
-        params.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
-        params.dimAmount = 0.35f
-        params.gravity = Gravity.BOTTOM
-
-        val pView = LayoutInflater.from(context).inflate(R.layout.popup_delete_layout, null)
-        windowManager.addView(pView, params)
-
-        val pTitle = pView.findViewById<TextView>(R.id.pTitle)
-        val pNote = pView.findViewById<TextView>(R.id.pNote)
-        val pDelete = pView.findViewById<Button>(R.id.pDelete)
-        val pCancel = pView.findViewById<Button>(R.id.pCancel)
-
-        pTitle.text = getString(R.string.del_x, note.title)
-        pNote.text = note.content
-        pDelete.setOnClickListener {
-            deleteNote(note)
-            windowManager.removeView(pView)
-        }
-
-        pCancel.setOnClickListener { windowManager.removeView(pView) }
-        pView.setOnClickListener { windowManager.removeView(pView) }
-
-        pDelete.setTextColor(getColor(COLORS[note.colorIndex]))
-        pCancel.setTextColor(getColor(COLORS[note.colorIndex]))
-    }
-
     private fun showNotification(note: Note) {
         val nmc = NotificationManagerCompat.from(this)
         nmc.notify( //for some reason this in needed to make grouping work
@@ -253,13 +173,14 @@ class QSTile : TileService() {
                 .addAction(
                     R.drawable.ic_edit,
                     getString(R.string.edit),
-                    getPendingIntent(note, false)
+                    getPendingIntent(note, ACTION_EDIT_NOTE)
                 )
                 .addAction(
                     R.drawable.ic_delete,
                     getString(R.string.del),
-                    getPendingIntent(note, true)
+                    getPendingIntent(note, ACTION_DELETE_NOTE)
                 )
+                .setContentIntent(getPendingIntent(note, ACTION_SHOW_NOTE))
                 .setColor(getColor(COLORS[note.colorIndex]))
                 .build()
         )
@@ -271,7 +192,93 @@ class QSTile : TileService() {
         if (notes.size == 0) nmc.cancel(NOTIFICATION_GROUP_HOLDER)
     }
 
-    // #### helper methods ####
+    private fun editNotePopup(note: Note) {
+        if (!Settings.canDrawOverlays(context)) return
+        val deleteDialog = Dialog(R.layout.popup_edit_layout, note, note.title)
+        val pColorPicker = deleteDialog.pView.findViewById<RadioGroup>(R.id.color_picker).also {
+            it.setOnCheckedChangeListener { _, i ->
+                deleteDialog.pPos.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
+                deleteDialog.pNeg.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
+                deleteDialog.pIcon.setColorFilter(getColor(COLORS[RBIDS.indexOf(i)]))
+            }
+            it.check(RBIDS[note.colorIndex])
+        }
+
+        deleteDialog.pNeg.setOnClickListener { deleteDialog.dismiss() }
+        deleteDialog.pPos.setOnClickListener {
+            note.title = deleteDialog.pTitle.text.toString()
+            note.content = deleteDialog.pNote.text.toString()
+            note.colorIndex = RBIDS.indexOf(pColorPicker.checkedRadioButtonId)
+            saveNote(note)
+            deleteDialog.dismiss()
+        }
+    }
+
+    private fun deleteNoteDialog(note: Note) {
+        if (!Settings.canDrawOverlays(context)) return
+        val deleteDialog =
+            Dialog(R.layout.popup_show_layout, note, getString(R.string.del_x, note.title))
+        deleteDialog.pNeg.setText(R.string.cancel)
+        deleteDialog.pNeg.setOnClickListener { deleteDialog.dismiss() }
+        deleteDialog.pPos.setOnClickListener {
+            deleteNote(note)
+            deleteDialog.dismiss()
+        }
+    }
+
+    private fun showNoteDialog(note: Note) {
+        if (!Settings.canDrawOverlays(context)) return
+        val deleteDialog = Dialog(R.layout.popup_show_layout, note, note.title)
+        deleteDialog.pNeg.setOnClickListener {
+            editNotePopup(note)
+            deleteDialog.dismiss()
+        }
+        deleteDialog.pPos.setOnClickListener {
+            deleteNoteDialog(note)
+            deleteDialog.dismiss()
+        }
+    }
+
+    inner class Dialog(layoutRes: Int, note: Note, title: String?) {
+        private val windowManager: WindowManager
+        val pView: View
+        val pTitle: TextView
+        val pNote: TextView
+        val pNeg: Button
+        val pPos: Button
+        val pIcon: ImageView
+
+        init {
+            closePanel()
+            windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+            val params = WindowManager.LayoutParams(
+                (resources.displayMetrics.widthPixels * 0.90).toInt(),
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_DIM_BEHIND,
+                PixelFormat.TRANSLUCENT
+            )
+            params.windowAnimations = R.style.PopupAnimStyle
+            params.softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN
+            params.dimAmount = 0.35f
+            params.gravity = Gravity.BOTTOM
+
+            pView = LayoutInflater.from(context).inflate(layoutRes, null)
+            windowManager.addView(pView, params)
+            pView.setOnClickListener { dismiss() }
+
+            pTitle = pView.findViewById<TextView>(R.id.pTitle).also { it.text = title }
+            pNote = pView.findViewById<TextView>(R.id.pNote).also { it.text = note.content }
+            pNeg = pView.findViewById<Button>(R.id.pNeg)
+                .also { it.setTextColor(getColor(COLORS[note.colorIndex])) }
+            pPos = pView.findViewById<Button>(R.id.pPos)
+                .also { it.setTextColor(getColor(COLORS[note.colorIndex])) }
+            pIcon = pView.findViewById<ImageView>(R.id.pIcon)
+                .also { it.setColorFilter(getColor(COLORS[note.colorIndex])) }
+        }
+
+        fun dismiss() = windowManager.removeView(pView)
+    }
 
     private fun requestPermission() {
         if (!Settings.canDrawOverlays(this)) {
@@ -303,8 +310,8 @@ class QSTile : TileService() {
         return newID
     }
 
-    private fun getPendingIntent(note: Note, delete: Boolean): PendingIntent {
-        val intent = Intent(if (delete) ACTION_DELETE_NOTE else ACTION_EDIT_NOTE)
+    private fun getPendingIntent(note: Note, action: String): PendingIntent {
+        val intent = Intent(action)
         intent.putExtra(INTENT_EXTRA, note)
         return PendingIntent.getBroadcast(
             context,
@@ -346,19 +353,23 @@ class QSTile : TileService() {
             noteView.setTextColor(R.id.qs_list_item_title, getColor(COLORS[note.colorIndex]))
             noteView.setTextViewText(R.id.qs_list_item_content, note.content)
             noteView.setOnClickPendingIntent(
+                R.id.qs_list_item_container,
+                getPendingIntent(note, ACTION_SHOW_NOTE)
+            )
+            noteView.setOnClickPendingIntent(
                 R.id.qs_list_item_edit,
-                getPendingIntent(note, false)
+                getPendingIntent(note, ACTION_EDIT_NOTE)
             )
             noteView.setOnClickPendingIntent(
                 R.id.qs_list_item_delete,
-                getPendingIntent(note, true)
+                getPendingIntent(note, ACTION_DELETE_NOTE)
             )
             adapter.addView(noteView)
         }
 
         remoteViews.setOnClickPendingIntent(
             R.id.qs_detail_add,
-            getPendingIntent(Note(null, null, 0, generateNewNoteID()), false)
+            getPendingIntent(Note(null, null, 0, generateNewNoteID()), ACTION_EDIT_NOTE)
         )
         return remoteViews
     }
@@ -374,16 +385,4 @@ class QSTile : TileService() {
             root.addView(LLId, aView)
         }
     }
-
-    /*
-    public final void semFireToggleStateChanged(boolean var1, boolean var2)
-    public RemoteViews semGetDetailView()
-    public CharSequence semGetDetailViewSettingButtonName()
-    public CharSequence semGetDetailViewTitle()
-    public Intent semGetSettingsIntent()
-    public boolean semIsToggleButtonChecked()
-    public boolean semIsToggleButtonExists()
-    public void semSetToggleButtonChecked(boolean var1)
-    public final void semUpdateDetailView()
-    */
 }

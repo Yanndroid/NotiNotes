@@ -14,75 +14,112 @@
         android:paddingHorizontal="24dp"
         android:paddingTop="24dp">
 
-        <RadioGroup
-            android:id="@+id/color_picker"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="18dp"
+            android:gravity="start|center_vertical"
             android:orientation="horizontal">
 
-            <RadioButton
-                android:id="@+id/color_1"
-                android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/pIcon"
+                android:layout_width="32.0dip"
+                android:layout_height="32.0dip"
+                android:layout_marginEnd="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_note" />
+
+            <EditText
+                android:id="@+id/pTitle"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:button="@drawable/color_radio_button"
-                android:buttonTint="@color/color_1" />
+                android:ellipsize="end"
+                android:hint="@string/title"
+                android:singleLine="true"
+                android:textAlignment="viewStart"
+                android:textColor="?android:colorForeground"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-            <RadioButton
-                android:id="@+id/color_2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:button="@drawable/color_radio_button"
-                android:buttonTint="@color/color_2" />
-
-            <RadioButton
-                android:id="@+id/color_3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:button="@drawable/color_radio_button"
-                android:buttonTint="@color/color_3" />
-
-            <RadioButton
-                android:id="@+id/color_4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:button="@drawable/color_radio_button"
-                android:buttonTint="@color/color_4" />
-
-            <RadioButton
-                android:id="@+id/color_5"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:button="@drawable/color_radio_button"
-                android:buttonTint="@color/color_5" />
-
-            <RadioButton
-                android:id="@+id/color_6"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
-                android:button="@drawable/color_radio_button"
-                android:buttonTint="@color/color_6" />
-
-        </RadioGroup>
-
-        <EditText
-            android:id="@+id/pTitle"
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="18dp"
-            android:ellipsize="end"
-            android:hint="@string/title"
-            android:singleLine="true"
-            android:textAlignment="viewStart"
-            android:textColor="?android:colorForeground"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:scrollbars="horizontal">
+
+            <RadioGroup
+                android:id="@+id/color_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/color_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_1" />
+
+                <RadioButton
+                    android:id="@+id/color_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_2" />
+
+                <RadioButton
+                    android:id="@+id/color_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_3" />
+
+                <RadioButton
+                    android:id="@+id/color_4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_4" />
+
+                <RadioButton
+                    android:id="@+id/color_5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_5" />
+
+                <RadioButton
+                    android:id="@+id/color_6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_6" />
+
+                <RadioButton
+                    android:id="@+id/color_7"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_7" />
+
+                <RadioButton
+                    android:id="@+id/color_8"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:button="@drawable/color_radio_button"
+                    android:buttonTint="@color/color_8" />
+
+            </RadioGroup>
+        </HorizontalScrollView>
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -114,7 +151,7 @@
             android:paddingBottom="20dp">
 
             <Button
-                android:id="@+id/pCancel"
+                android:id="@+id/pNeg"
                 style="@style/PopupButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -128,7 +165,7 @@
                 android:background="@color/popup_divider_color" />
 
             <Button
-                android:id="@+id/pSave"
+                android:id="@+id/pPos"
                 style="@style/PopupButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

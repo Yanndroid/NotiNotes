@@ -9,4 +9,5 @@
             <solid android:color="@color/divider_color" />
         </shape>
     </item>
+    <item android:drawable="?android:selectableItemBackground" />
 </layer-list>
