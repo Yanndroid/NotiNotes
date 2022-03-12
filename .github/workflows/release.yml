@@ -23,7 +23,7 @@ jobs:
        with:
          release_name: ${{ steps.values.outputs.name }}
          tag_name: ${{ steps.values.outputs.tag }}
-         body: Changelog
+         body: No changelog
      - name: Add apk
        uses: actions/upload-release-asset@v1
        env:
