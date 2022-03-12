@@ -1,6 +1,7 @@
 package de.dlyt.yanndroid.notinotes
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,9 +9,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.Settings
 import android.service.quicksettings.TileService
 import android.util.Log
@@ -21,20 +24,31 @@ import android.view.WindowManager
 import android.widget.*
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.FileProvider
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.io.File
 import java.io.Serializable
 import java.util.stream.Collectors
 
 class QSTile : TileService() {
 
-    private val INTENT_EXTRA = "intent_note"
     private val NOTIFICATION_GROUP = "de.dlyt.yanndroid.notinotes.NOTES_GROUP"
     private val NOTIFICATION_GROUP_HOLDER = -1
     private val NOTIFICATION_CHANNEL = "1234"
+
     private val ACTION_EDIT_NOTE = "de.dlyt.yanndroid.notinotes.EDIT_NOTE"
     private val ACTION_DELETE_NOTE = "de.dlyt.yanndroid.notinotes.DELETE_NOTE"
     private val ACTION_SHOW_NOTE = "de.dlyt.yanndroid.notinotes.SHOW_NOTE"
+    private val EXTRA_NOTE = "intent_note"
+
+    private val ACTION_APP_UPDATE = "de.dlyt.yanndroid.notinotes.UPDATE"
+    private val EXTRA_UPDATE_URL = "UPDATE_URL"
+    private val EXTRA_UPDATE_VNM = "UPDATE_VNM"
 
     var COLORS = intArrayOf(
         R.color.color_1,
@@ -61,7 +75,15 @@ class QSTile : TileService() {
     private var notes: ArrayList<Note> = ArrayList()
     private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            val note: Note = (intent.getSerializableExtra(INTENT_EXTRA) ?: return) as Note
+            if (intent.action == ACTION_APP_UPDATE) {
+                installUpdate(
+                    intent.getStringExtra(EXTRA_UPDATE_URL),
+                    intent.getStringExtra(EXTRA_UPDATE_VNM)
+                )
+                return
+            }
+
+            val note: Note = (intent.getSerializableExtra(EXTRA_NOTE) ?: return) as Note
             when (intent.action) {
                 ACTION_EDIT_NOTE -> editNotePopup(note)
                 ACTION_DELETE_NOTE -> deleteNoteDialog(note)
@@ -98,7 +120,10 @@ class QSTile : TileService() {
             it.addAction(ACTION_EDIT_NOTE)
             it.addAction(ACTION_DELETE_NOTE)
             it.addAction(ACTION_SHOW_NOTE)
+            it.addAction(ACTION_APP_UPDATE)
         })
+
+        checkForUpdate()
     }
 
     override fun onTileRemoved() {
@@ -152,6 +177,9 @@ class QSTile : TileService() {
         }
     }
 
+
+    /** #### Notifications #### **/
+
     private fun showNotification(note: Note) {
         val nmc = NotificationManagerCompat.from(this)
         nmc.notify( //for some reason this in needed to make grouping work
@@ -192,25 +220,28 @@ class QSTile : TileService() {
         if (notes.size == 0) nmc.cancel(NOTIFICATION_GROUP_HOLDER)
     }
 
+
+    /** #### Dialogs #### **/
+
     private fun editNotePopup(note: Note) {
         if (!Settings.canDrawOverlays(context)) return
-        val deleteDialog = Dialog(R.layout.popup_edit_layout, note, note.title)
-        val pColorPicker = deleteDialog.pView.findViewById<RadioGroup>(R.id.color_picker).also {
+        val editDialog = Dialog(R.layout.popup_edit_layout, note, note.title)
+        val pColorPicker = editDialog.pView.findViewById<RadioGroup>(R.id.color_picker).also {
             it.setOnCheckedChangeListener { _, i ->
-                deleteDialog.pPos.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
-                deleteDialog.pNeg.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
-                deleteDialog.pIcon.setColorFilter(getColor(COLORS[RBIDS.indexOf(i)]))
+                editDialog.pPos.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
+                editDialog.pNeg.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
+                editDialog.pIcon.setColorFilter(getColor(COLORS[RBIDS.indexOf(i)]))
             }
             it.check(RBIDS[note.colorIndex])
         }
 
-        deleteDialog.pNeg.setOnClickListener { deleteDialog.dismiss() }
-        deleteDialog.pPos.setOnClickListener {
-            note.title = deleteDialog.pTitle.text.toString()
-            note.content = deleteDialog.pNote.text.toString()
+        editDialog.pNeg.setOnClickListener { editDialog.dismiss() }
+        editDialog.pPos.setOnClickListener {
+            note.title = editDialog.pTitle.text.toString()
+            note.content = editDialog.pNote.text.toString()
             note.colorIndex = RBIDS.indexOf(pColorPicker.checkedRadioButtonId)
             saveNote(note)
-            deleteDialog.dismiss()
+            editDialog.dismiss()
         }
     }
 
@@ -228,14 +259,14 @@ class QSTile : TileService() {
 
     private fun showNoteDialog(note: Note) {
         if (!Settings.canDrawOverlays(context)) return
-        val deleteDialog = Dialog(R.layout.popup_show_layout, note, note.title)
-        deleteDialog.pNeg.setOnClickListener {
+        val showNoteDialog = Dialog(R.layout.popup_show_layout, note, note.title)
+        showNoteDialog.pNeg.setOnClickListener {
             editNotePopup(note)
-            deleteDialog.dismiss()
+            showNoteDialog.dismiss()
         }
-        deleteDialog.pPos.setOnClickListener {
+        showNoteDialog.pPos.setOnClickListener {
             deleteNoteDialog(note)
-            deleteDialog.dismiss()
+            showNoteDialog.dismiss()
         }
     }
 
@@ -249,7 +280,7 @@ class QSTile : TileService() {
         val pIcon: ImageView
 
         init {
-            closePanel()
+            closePanelAndUnlock()
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             val params = WindowManager.LayoutParams(
                 (resources.displayMetrics.widthPixels * 0.90).toInt(),
@@ -265,6 +296,7 @@ class QSTile : TileService() {
 
             pView = LayoutInflater.from(context).inflate(layoutRes, null)
             windowManager.addView(pView, params)
+
             pView.setOnClickListener { dismiss() }
 
             pTitle = pView.findViewById<TextView>(R.id.pTitle).also { it.text = title }
@@ -280,9 +312,12 @@ class QSTile : TileService() {
         fun dismiss() = windowManager.removeView(pView)
     }
 
+
+    /** #### Utils #### **/
+
     private fun requestPermission() {
         if (!Settings.canDrawOverlays(this)) {
-            closePanel()
+            closePanelAndUnlock()
             Toast.makeText(context, R.string.permission_toast, Toast.LENGTH_SHORT).show()
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
@@ -312,7 +347,7 @@ class QSTile : TileService() {
 
     private fun getPendingIntent(note: Note, action: String): PendingIntent {
         val intent = Intent(action)
-        intent.putExtra(INTENT_EXTRA, note)
+        intent.putExtra(EXTRA_NOTE, note)
         return PendingIntent.getBroadcast(
             context,
             note.id,
@@ -322,7 +357,11 @@ class QSTile : TileService() {
     }
 
     @SuppressLint("WrongConstant")
-    private fun closePanel() { //won't work for a12+
+    private fun closePanelAndUnlock() {
+        //unlock phone if locked
+        if (isLocked) unlockAndRun(null)
+
+        //close panel, won't work for A12+
         try {
             Class.forName("android.app.StatusBarManager").getMethod("collapsePanels")
                 .invoke(context.getSystemService("statusbar"))
@@ -336,7 +375,100 @@ class QSTile : TileService() {
         }
     }
 
-    // #### detail view (samsung only) ####
+
+    /** #### App update #### **/
+
+    private fun checkForUpdate() {
+        val mDatabase =
+            FirebaseDatabase.getInstance().reference.child(context.getString(R.string.firebase_childName))
+        mDatabase.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                try {
+                    val hashMap = HashMap<String?, String?>()
+                    for (child in snapshot.children) hashMap[child.key] = child.value.toString()
+
+                    if (hashMap[context.getString(R.string.firebase_versionCode)]?.toInt() ?: 0 > context.packageManager.getPackageInfo(
+                            context.packageName,
+                            0
+                        ).versionCode
+                    ) showUpdateNoti(
+                        hashMap[context.getString(R.string.firebase_apk)]!!,
+                        hashMap[context.getString(R.string.firebase_versionName)]!!
+                    )
+                } catch (e: PackageManager.NameNotFoundException) {
+                    Log.e("checkForUpdate", e.message)
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("checkForUpdate", error.message)
+            }
+        })
+    }
+
+    @SuppressLint("LaunchActivityFromNotification")
+    private fun showUpdateNoti(url: String, versionName: String) {
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            -2,
+            Intent(ACTION_APP_UPDATE).also {
+                it.putExtra(EXTRA_UPDATE_URL, url).putExtra(EXTRA_UPDATE_VNM, versionName)
+            },
+            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        NotificationManagerCompat.from(this)
+            .notify(
+                -2, NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+                    .setSmallIcon(R.drawable.ic_note)
+                    .setContentTitle(getString(R.string.update_available))
+                    .setContentText(getString(R.string.update_available_desc, versionName))
+                    .addAction(
+                        R.drawable.ic_download,
+                        getString(R.string.download),
+                        pendingIntent
+                    )
+                    .setContentIntent(pendingIntent)
+                    .build()
+            )
+    }
+
+    private fun installUpdate(url: String, versionName: String) {
+        val destination = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            .toString() + "/" + context.getString(R.string.app_name) + "_" + versionName + ".apk"
+
+        val file = File(destination)
+        if (file.exists()) file.delete()
+
+        val request = DownloadManager.Request(Uri.parse(url))
+        request.setMimeType("application/vnd.android.package-archive")
+        request.setTitle(context.getString(R.string.app_name).toString() + " Update")
+        request.setDescription(versionName)
+        request.setDestinationUri(Uri.parse("file://$destination"))
+
+        val onComplete: BroadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(ctxt: Context, intent: Intent) {
+                val apkFileUri = FileProvider.getUriForFile(
+                    context,
+                    context.applicationContext.packageName + ".provider",
+                    File(destination)
+                )
+                val install = Intent(Intent.ACTION_VIEW)
+                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                install.setDataAndType(apkFileUri, "application/vnd.android.package-archive")
+                context.startActivity(install)
+                context.unregisterReceiver(this)
+                closePanelAndUnlock()
+            }
+        }
+        context.registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+        (context.getSystemService(DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+    }
+
+
+    /** #### Detail view (samsung only) #### **/
 
     fun semGetSettingsIntent(): Intent =
         Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Yanndroid/NotiNotes"))

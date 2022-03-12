@@ -114,7 +114,6 @@
                     android:id="@+id/color_8"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="10dp"
                     android:button="@drawable/color_radio_button"
                     android:buttonTint="@color/color_8" />
 
