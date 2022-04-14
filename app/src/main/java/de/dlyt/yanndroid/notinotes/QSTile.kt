@@ -14,7 +14,9 @@ import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
+import android.os.IBinder
 import android.provider.Settings
+import android.service.quicksettings.IQSService
 import android.service.quicksettings.TileService
 import android.util.Log
 import android.view.Gravity
@@ -36,6 +38,15 @@ import java.io.Serializable
 import java.util.stream.Collectors
 
 class QSTile : TileService() {
+
+    private var mTileToken: IBinder? = null
+    private var mService: IQSService? = null
+
+    override fun onBind(intent: Intent): IBinder {
+        mService = IQSService.Stub.asInterface(intent.getIBinderExtra(EXTRA_SERVICE))
+        mTileToken = intent.getIBinderExtra(EXTRA_TOKEN)
+        return super.onBind(intent)
+    }
 
     private val NOTIFICATION_GROUP = "de.dlyt.yanndroid.notinotes.NOTES_GROUP"
     private val NOTIFICATION_GROUP_HOLDER = -1
@@ -111,8 +122,6 @@ class QSTile : TileService() {
 
     override fun onCreate() {
         super.onCreate()
-        requestPermission()
-        createNotificationChannel()
         loadNotesFromSP()
         for (note in notes) showNotification(note)
 
@@ -124,6 +133,12 @@ class QSTile : TileService() {
         })
 
         checkForUpdate()
+    }
+
+    override fun onTileAdded() {
+        super.onTileAdded()
+        requestPermission()
+        createNotificationChannel()
     }
 
     override fun onTileRemoved() {
@@ -224,7 +239,7 @@ class QSTile : TileService() {
     /** #### Dialogs #### **/
 
     private fun editNotePopup(note: Note) {
-        if (!Settings.canDrawOverlays(context)) return
+        if (requestPermission()) return
         val editDialog = Dialog(R.layout.popup_edit_layout, note, note.title)
         val pColorPicker = editDialog.pView.findViewById<RadioGroup>(R.id.color_picker).also {
             it.setOnCheckedChangeListener { _, i ->
@@ -246,7 +261,7 @@ class QSTile : TileService() {
     }
 
     private fun deleteNoteDialog(note: Note) {
-        if (!Settings.canDrawOverlays(context)) return
+        if (requestPermission()) return
         val deleteDialog =
             Dialog(R.layout.popup_show_layout, note, getString(R.string.del_x, note.title))
         deleteDialog.pNeg.setText(R.string.cancel)
@@ -258,7 +273,7 @@ class QSTile : TileService() {
     }
 
     private fun showNoteDialog(note: Note) {
-        if (!Settings.canDrawOverlays(context)) return
+        if (requestPermission()) return
         val showNoteDialog = Dialog(R.layout.popup_show_layout, note, note.title)
         showNoteDialog.pNeg.setOnClickListener {
             editNotePopup(note)
@@ -280,7 +295,7 @@ class QSTile : TileService() {
         val pIcon: ImageView
 
         init {
-            closePanelAndUnlock()
+            mService?.onStartActivity(mTileToken)
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             val params = WindowManager.LayoutParams(
                 (resources.displayMetrics.widthPixels * 0.90).toInt(),
@@ -315,17 +330,18 @@ class QSTile : TileService() {
 
     /** #### Utils #### **/
 
-    private fun requestPermission() {
-        if (!Settings.canDrawOverlays(this)) {
-            closePanelAndUnlock()
+    private fun requestPermission(): Boolean {
+        if (!Settings.canDrawOverlays(context)) {
             Toast.makeText(context, R.string.permission_toast, Toast.LENGTH_SHORT).show()
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                 Uri.parse("package:$packageName")
             )
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
+            startActivityAndCollapse(intent)
+            return true
         }
+        return false
     }
 
     private fun createNotificationChannel() {
@@ -356,54 +372,33 @@ class QSTile : TileService() {
         )
     }
 
-    @SuppressLint("WrongConstant")
-    private fun closePanelAndUnlock() {
-        //unlock phone if locked
-        if (isLocked) unlockAndRun(null)
-
-        //close panel, won't work for A12+
-        try {
-            Class.forName("android.app.StatusBarManager").getMethod("collapsePanels")
-                .invoke(context.getSystemService("statusbar"))
-        } catch (e: Exception) {
-            Log.e("closePanel", e.message.toString())
-            try {
-                context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
-            } catch (e: Exception) {
-                Log.e("closePanel", e.message.toString())
-            }
-        }
-    }
-
-
     /** #### App update #### **/
 
     private fun checkForUpdate() {
-        val mDatabase =
-            FirebaseDatabase.getInstance().reference.child(context.getString(R.string.firebase_childName))
-        mDatabase.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                try {
-                    val hashMap = HashMap<String?, String?>()
-                    for (child in snapshot.children) hashMap[child.key] = child.value.toString()
+        FirebaseDatabase.getInstance().reference.child(context.getString(R.string.firebase_childName))
+            .addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    try {
+                        val hashMap = HashMap<String?, String?>()
+                        for (child in snapshot.children) hashMap[child.key] = child.value.toString()
 
-                    if (hashMap[context.getString(R.string.firebase_versionCode)]?.toInt() ?: 0 > context.packageManager.getPackageInfo(
-                            context.packageName,
-                            0
-                        ).versionCode
-                    ) showUpdateNoti(
-                        hashMap[context.getString(R.string.firebase_apk)]!!,
-                        hashMap[context.getString(R.string.firebase_versionName)]!!
-                    )
-                } catch (e: PackageManager.NameNotFoundException) {
-                    Log.e("checkForUpdate", e.message)
+                        if (hashMap[context.getString(R.string.firebase_versionCode)]?.toInt() ?: 0 > context.packageManager.getPackageInfo(
+                                context.packageName,
+                                0
+                            ).versionCode
+                        ) showUpdateNoti(
+                            hashMap[context.getString(R.string.firebase_apk)]!!,
+                            hashMap[context.getString(R.string.firebase_versionName)]!!
+                        )
+                    } catch (e: PackageManager.NameNotFoundException) {
+                        Log.e("checkForUpdate", e.message)
+                    }
                 }
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("checkForUpdate", error.message)
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("checkForUpdate", error.message)
+                }
+            })
     }
 
     @SuppressLint("LaunchActivityFromNotification")
@@ -458,9 +453,8 @@ class QSTile : TileService() {
                 install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
                 install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 install.setDataAndType(apkFileUri, "application/vnd.android.package-archive")
-                context.startActivity(install)
+                startActivityAndCollapse(install)
                 context.unregisterReceiver(this)
-                closePanelAndUnlock()
             }
         }
         context.registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
