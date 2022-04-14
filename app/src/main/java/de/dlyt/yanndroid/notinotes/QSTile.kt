@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
@@ -52,7 +53,8 @@ class QSTile : TileService() {
     private val NOTIFICATION_GROUP_HOLDER = -1
     private val NOTIFICATION_CHANNEL = "1234"
 
-    private val ACTION_EDIT_NOTE = "de.dlyt.yanndroid.notinotes.EDIT_NOTE"
+    private val ACTION_EDIT_DIALOG = "de.dlyt.yanndroid.notinotes.EDIT_DIALOG"
+    private val ACTION_DELETE_DIALOG = "de.dlyt.yanndroid.notinotes.DELETE_DIALOG"
     private val ACTION_DELETE_NOTE = "de.dlyt.yanndroid.notinotes.DELETE_NOTE"
     private val ACTION_SHOW_NOTE = "de.dlyt.yanndroid.notinotes.SHOW_NOTE"
     private val EXTRA_NOTE = "intent_note"
@@ -96,18 +98,26 @@ class QSTile : TileService() {
 
             val note: Note = (intent.getSerializableExtra(EXTRA_NOTE) ?: return) as Note
             when (intent.action) {
-                ACTION_EDIT_NOTE -> editNotePopup(note)
-                ACTION_DELETE_NOTE -> deleteNoteDialog(note)
+                ACTION_EDIT_DIALOG -> editNotePopup(note)
+                ACTION_DELETE_DIALOG -> deleteNoteDialog(note)
+                ACTION_DELETE_NOTE -> if (!note.locked) deleteNote(note)
                 ACTION_SHOW_NOTE -> showNoteDialog(note)
             }
         }
     }
 
-    class Note(title: String?, content: String?, colorIndex: Int, id: Int) : Serializable {
-        var title = title
-        var content = content
-        var colorIndex = colorIndex
-        var id = id
+    class Note(id: Int) :
+        Serializable {
+        var title: String? = null
+        var content: String? = null
+        var colorIndex: Int = 0
+        var id: Int = 0
+        var secret: Boolean = false
+        var locked: Boolean = true
+
+        init {
+            this.id = id
+        }
     }
 
     private fun saveNotesToSP() = getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
@@ -126,7 +136,8 @@ class QSTile : TileService() {
         for (note in notes) showNotification(note)
 
         registerReceiver(mBroadcastReceiver, IntentFilter().also {
-            it.addAction(ACTION_EDIT_NOTE)
+            it.addAction(ACTION_EDIT_DIALOG)
+            it.addAction(ACTION_DELETE_DIALOG)
             it.addAction(ACTION_DELETE_NOTE)
             it.addAction(ACTION_SHOW_NOTE)
             it.addAction(ACTION_APP_UPDATE)
@@ -162,7 +173,7 @@ class QSTile : TileService() {
 
     override fun onClick() {
         super.onClick()
-        editNotePopup(Note(null, null, 0, generateNewNoteID()))
+        editNotePopup(Note(generateNewNoteID()))
     }
 
     private fun saveNote(note: Note) {
@@ -208,7 +219,8 @@ class QSTile : TileService() {
         nmc.notify(
             note.id, NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setStyle(NotificationCompat.BigTextStyle())
-                .setOngoing(true)
+                .setOngoing(note.locked)
+                .setVisibility(if (note.secret) NotificationCompat.VISIBILITY_SECRET else NotificationCompat.VISIBILITY_PUBLIC)
                 .setGroup(NOTIFICATION_GROUP)
                 .setSmallIcon(R.drawable.ic_note)
                 .setContentTitle(note.title)
@@ -216,14 +228,15 @@ class QSTile : TileService() {
                 .addAction(
                     R.drawable.ic_edit,
                     getString(R.string.edit),
-                    getPendingIntent(note, ACTION_EDIT_NOTE)
+                    getPendingIntent(note, ACTION_EDIT_DIALOG)
                 )
                 .addAction(
                     R.drawable.ic_delete,
                     getString(R.string.del),
-                    getPendingIntent(note, ACTION_DELETE_NOTE)
+                    getPendingIntent(note, ACTION_DELETE_DIALOG)
                 )
                 .setContentIntent(getPendingIntent(note, ACTION_SHOW_NOTE))
+                .setDeleteIntent(getPendingIntent(note, ACTION_DELETE_NOTE))
                 .setColor(getColor(COLORS[note.colorIndex]))
                 .build()
         )
@@ -241,11 +254,20 @@ class QSTile : TileService() {
     private fun editNotePopup(note: Note) {
         if (requestPermission()) return
         val editDialog = Dialog(R.layout.popup_edit_layout, note, note.title)
+
+        val checkHOL = editDialog.pView.findViewById<CheckBox>(R.id.check_hol)
+            .also { it.isChecked = note.secret }
+        val checkLock = editDialog.pView.findViewById<CheckBox>(R.id.check_lock)
+            .also { it.isChecked = note.locked }
+
         val pColorPicker = editDialog.pView.findViewById<RadioGroup>(R.id.color_picker).also {
             it.setOnCheckedChangeListener { _, i ->
-                editDialog.pPos.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
-                editDialog.pNeg.setTextColor(getColor(COLORS[RBIDS.indexOf(i)]))
-                editDialog.pIcon.setColorFilter(getColor(COLORS[RBIDS.indexOf(i)]))
+                val color = getColor(COLORS[RBIDS.indexOf(i)])
+                editDialog.pPos.setTextColor(color)
+                editDialog.pNeg.setTextColor(color)
+                editDialog.pIcon.setColorFilter(color)
+                checkHOL.buttonTintList = ColorStateList.valueOf(color)
+                checkLock.buttonTintList = ColorStateList.valueOf(color)
             }
             it.check(RBIDS[note.colorIndex])
         }
@@ -255,6 +277,8 @@ class QSTile : TileService() {
             note.title = editDialog.pTitle.text.toString()
             note.content = editDialog.pNote.text.toString()
             note.colorIndex = RBIDS.indexOf(pColorPicker.checkedRadioButtonId)
+            note.secret = checkHOL.isChecked
+            note.locked = checkLock.isChecked
             saveNote(note)
             editDialog.dismiss()
         }
@@ -484,18 +508,18 @@ class QSTile : TileService() {
             )
             noteView.setOnClickPendingIntent(
                 R.id.qs_list_item_edit,
-                getPendingIntent(note, ACTION_EDIT_NOTE)
+                getPendingIntent(note, ACTION_EDIT_DIALOG)
             )
             noteView.setOnClickPendingIntent(
                 R.id.qs_list_item_delete,
-                getPendingIntent(note, ACTION_DELETE_NOTE)
+                getPendingIntent(note, ACTION_DELETE_DIALOG)
             )
             adapter.addView(noteView)
         }
 
         remoteViews.setOnClickPendingIntent(
             R.id.qs_detail_add,
-            getPendingIntent(Note(null, null, 0, generateNewNoteID()), ACTION_EDIT_NOTE)
+            getPendingIntent(Note(generateNewNoteID()), ACTION_EDIT_DIALOG)
         )
         return remoteViews
     }

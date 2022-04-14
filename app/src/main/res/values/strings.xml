@@ -18,4 +18,6 @@
     <string name="update_available">Update available</string>
     <string name="download">Download</string>
     <string name="update_available_desc">A new version is available: %s</string>
+    <string name="hide_on_lockscreen">Hide on Lockscreen</string>
+    <string name="locked">Locked</string>
 </resources>

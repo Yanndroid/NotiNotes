@@ -120,6 +120,18 @@
             </RadioGroup>
         </HorizontalScrollView>
 
+        <CheckBox
+            android:id="@+id/check_hol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/hide_on_lockscreen" />
+
+        <CheckBox
+            android:id="@+id/check_lock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/locked" />
+
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -137,6 +149,7 @@
                 android:hint="@string/note"
                 android:lineSpacingExtra="4dp"
                 android:minHeight="150dp"
+                android:paddingTop="18dp"
                 android:textAlignment="viewStart"
                 android:textColor="?android:colorForeground" />
 
