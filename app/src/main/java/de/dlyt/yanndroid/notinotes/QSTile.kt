@@ -15,9 +15,7 @@ import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.os.IBinder
 import android.provider.Settings
-import android.service.quicksettings.IQSService
 import android.service.quicksettings.TileService
 import android.util.Log
 import android.view.Gravity
@@ -39,15 +37,6 @@ import java.io.Serializable
 import java.util.stream.Collectors
 
 class QSTile : TileService() {
-
-    private var mTileToken: IBinder? = null
-    private var mService: IQSService? = null
-
-    override fun onBind(intent: Intent): IBinder {
-        mService = IQSService.Stub.asInterface(intent.getIBinderExtra(EXTRA_SERVICE))
-        mTileToken = intent.getIBinderExtra(EXTRA_TOKEN)
-        return super.onBind(intent)
-    }
 
     private val NOTIFICATION_GROUP = "de.dlyt.yanndroid.notinotes.NOTES_GROUP"
     private val NOTIFICATION_GROUP_HOLDER = -1
@@ -319,7 +308,7 @@ class QSTile : TileService() {
         val pIcon: ImageView
 
         init {
-            mService?.onStartActivity(mTileToken)
+            closePanelAndUnlock()
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             val params = WindowManager.LayoutParams(
                 (resources.displayMetrics.widthPixels * 0.90).toInt(),
@@ -396,6 +385,31 @@ class QSTile : TileService() {
         )
     }
 
+    @SuppressLint("WrongConstant")
+    private fun closePanelAndUnlock() {
+        //unlock phone if locked
+        if (isLocked) unlockAndRun(null)
+
+        //close panel, won't work for A12+
+        try {
+            Class.forName("android.app.StatusBarManager").getMethod("collapsePanels")
+                .invoke(context.getSystemService("statusbar"))
+        } catch (e: Exception) {
+            Log.e("closePanel", e.message.toString())
+            try {
+                context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+            } catch (e: Exception) {
+                Log.e("closePanel", e.message.toString())
+            }
+        }
+
+        //mService?.onStartActivity(mTileToken)
+        /*val intent = Intent(this, QSTile::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivityAndCollapse(intent)*/
+
+    }
+
     /** #### App update #### **/
 
     private fun checkForUpdate() {
@@ -406,7 +420,8 @@ class QSTile : TileService() {
                         val hashMap = HashMap<String?, String?>()
                         for (child in snapshot.children) hashMap[child.key] = child.value.toString()
 
-                        if (hashMap[context.getString(R.string.firebase_versionCode)]?.toInt() ?: 0 > context.packageManager.getPackageInfo(
+                        if ((hashMap[context.getString(R.string.firebase_versionCode)]?.toInt()
+                                ?: 0) > context.packageManager.getPackageInfo(
                                 context.packageName,
                                 0
                             ).versionCode
