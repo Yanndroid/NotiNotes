@@ -1,9 +1,4 @@
 <resources>
-    <string name="firebase_childName" translatable="false">NotiNotes</string>
-    <string name="firebase_versionCode" translatable="false">versionCode</string>
-    <string name="firebase_versionName" translatable="false">versionName</string>
-    <string name="firebase_apk" translatable="false">apk</string>
-
     <string name="app_name">NotiNotes</string>
     <string name="edit">Edit</string>
     <string name="del">Delete</string>
@@ -15,9 +10,6 @@
     <string name="notes">Notes</string>
     <string name="del_x">Delete %s ?</string>
     <string name="permission_toast">Enable NotiNotes here</string>
-    <string name="update_available">Update available</string>
-    <string name="download">Download</string>
-    <string name="update_available_desc">A new version is available: %s</string>
     <string name="hide_on_lockscreen">Hide on Lockscreen</string>
     <string name="locked">Lock in Notifications</string>
 </resources>

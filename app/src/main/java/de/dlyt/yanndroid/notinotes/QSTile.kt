@@ -1,7 +1,6 @@
 package de.dlyt.yanndroid.notinotes
 
 import android.annotation.SuppressLint
-import android.app.DownloadManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,12 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
-import android.os.Environment
 import android.provider.Settings
 import android.service.quicksettings.TileService
 import android.util.Log
@@ -25,14 +22,8 @@ import android.view.WindowManager
 import android.widget.*
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.FileProvider
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import java.io.File
 import java.io.Serializable
 import java.util.stream.Collectors
 
@@ -47,10 +38,6 @@ class QSTile : TileService() {
     private val ACTION_DELETE_NOTE = "de.dlyt.yanndroid.notinotes.DELETE_NOTE"
     private val ACTION_SHOW_NOTE = "de.dlyt.yanndroid.notinotes.SHOW_NOTE"
     private val EXTRA_NOTE = "intent_note"
-
-    private val ACTION_APP_UPDATE = "de.dlyt.yanndroid.notinotes.UPDATE"
-    private val EXTRA_UPDATE_URL = "UPDATE_URL"
-    private val EXTRA_UPDATE_VNM = "UPDATE_VNM"
 
     var COLORS = intArrayOf(
         R.color.color_1,
@@ -77,14 +64,6 @@ class QSTile : TileService() {
     private var notes: ArrayList<Note> = ArrayList()
     private val mBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == ACTION_APP_UPDATE) {
-                installUpdate(
-                    intent.getStringExtra(EXTRA_UPDATE_URL),
-                    intent.getStringExtra(EXTRA_UPDATE_VNM)
-                )
-                return
-            }
-
             val note: Note = (intent.getSerializableExtra(EXTRA_NOTE) ?: return) as Note
             when (intent.action) {
                 ACTION_EDIT_DIALOG -> editNotePopup(note)
@@ -129,10 +108,7 @@ class QSTile : TileService() {
             it.addAction(ACTION_DELETE_DIALOG)
             it.addAction(ACTION_DELETE_NOTE)
             it.addAction(ACTION_SHOW_NOTE)
-            it.addAction(ACTION_APP_UPDATE)
         })
-
-        checkForUpdate()
     }
 
     override fun onTileAdded() {
@@ -409,97 +385,6 @@ class QSTile : TileService() {
         startActivityAndCollapse(intent)*/
 
     }
-
-    /** #### App update #### **/
-
-    private fun checkForUpdate() {
-        FirebaseDatabase.getInstance().reference.child(context.getString(R.string.firebase_childName))
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    try {
-                        val hashMap = HashMap<String?, String?>()
-                        for (child in snapshot.children) hashMap[child.key] = child.value.toString()
-
-                        if ((hashMap[context.getString(R.string.firebase_versionCode)]?.toInt()
-                                ?: 0) > context.packageManager.getPackageInfo(
-                                context.packageName,
-                                0
-                            ).versionCode
-                        ) showUpdateNoti(
-                            hashMap[context.getString(R.string.firebase_apk)]!!,
-                            hashMap[context.getString(R.string.firebase_versionName)]!!
-                        )
-                    } catch (e: PackageManager.NameNotFoundException) {
-                        Log.e("checkForUpdate", e.message)
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("checkForUpdate", error.message)
-                }
-            })
-    }
-
-    @SuppressLint("LaunchActivityFromNotification")
-    private fun showUpdateNoti(url: String, versionName: String) {
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            -2,
-            Intent(ACTION_APP_UPDATE).also {
-                it.putExtra(EXTRA_UPDATE_URL, url).putExtra(EXTRA_UPDATE_VNM, versionName)
-            },
-            PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        NotificationManagerCompat.from(this)
-            .notify(
-                -2, NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                    .setSmallIcon(R.drawable.ic_note)
-                    .setContentTitle(getString(R.string.update_available))
-                    .setContentText(getString(R.string.update_available_desc, versionName))
-                    .addAction(
-                        R.drawable.ic_download,
-                        getString(R.string.download),
-                        pendingIntent
-                    )
-                    .setContentIntent(pendingIntent)
-                    .build()
-            )
-    }
-
-    private fun installUpdate(url: String, versionName: String) {
-        val destination = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            .toString() + "/" + context.getString(R.string.app_name) + "_" + versionName + ".apk"
-
-        val file = File(destination)
-        if (file.exists()) file.delete()
-
-        val request = DownloadManager.Request(Uri.parse(url))
-        request.setMimeType("application/vnd.android.package-archive")
-        request.setTitle(context.getString(R.string.app_name).toString() + " Update")
-        request.setDescription(versionName)
-        request.setDestinationUri(Uri.parse("file://$destination"))
-
-        val onComplete: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(ctxt: Context, intent: Intent) {
-                val apkFileUri = FileProvider.getUriForFile(
-                    context,
-                    context.applicationContext.packageName + ".provider",
-                    File(destination)
-                )
-                val install = Intent(Intent.ACTION_VIEW)
-                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                install.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-                install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                install.setDataAndType(apkFileUri, "application/vnd.android.package-archive")
-                startActivityAndCollapse(install)
-                context.unregisterReceiver(this)
-            }
-        }
-        context.registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-        (context.getSystemService(DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
-    }
-
 
     /** #### Detail view (samsung only) #### **/
 
