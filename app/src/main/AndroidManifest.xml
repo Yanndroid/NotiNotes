@@ -3,6 +3,7 @@
     package="de.dlyt.yanndroid.notinotes">
 
     <uses-permission android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <application
@@ -20,6 +21,16 @@
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
             </intent-filter>
         </service>
+
+        <receiver
+            android:name=".ActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="de.dlyt.yanndroid.notinotes.EDIT" />
+                <action android:name="de.dlyt.yanndroid.notinotes.DELETE" />
+                <action android:name="de.dlyt.yanndroid.notinotes.SHOW" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
