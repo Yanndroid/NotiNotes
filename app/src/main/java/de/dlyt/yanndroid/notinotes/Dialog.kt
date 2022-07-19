@@ -13,6 +13,7 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 
 class Dialog(private val context: Context, layoutRes: Int, note: Notes.Note, title: String?) {
     private val windowManager: WindowManager
@@ -71,6 +72,7 @@ class Dialog(private val context: Context, layoutRes: Int, note: Notes.Note, tit
                 context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
             } catch (e: Exception) {
                 Log.e("closePanel", e.message.toString())
+                Toast.makeText(context, R.string.a12closePanel, Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -12,4 +12,6 @@
     <string name="permission_toast">Enable NotiNotes here</string>
     <string name="hide_on_lockscreen">Hide on Lockscreen</string>
     <string name="locked">Lock in Notifications</string>
+
+    <string name="a12closePanel">Close the panel</string>
 </resources>
