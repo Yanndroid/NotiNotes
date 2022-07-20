@@ -39,14 +39,14 @@ class QSTile : TileService() {
         }
     }
 
-    override fun onDestroy() {
+    /*override fun onDestroy() {
         super.onDestroy()
         notes.saveNotesToSP()
-    }
+    }*/
 
     override fun onClick() {
         super.onClick()
-        notes.editNotePopup(Notes.Note(notes.generateNewNoteID()))
+        notes.editNotePopup(Notes.Note())
     }
 
     private fun createNotificationChannel() {
@@ -70,6 +70,7 @@ class QSTile : TileService() {
         val remoteViews = RemoteViews(context.packageName, R.layout.qs_detail_view)
         val adapter = LinearLayoutAdapter(remoteViews, R.id.qs_detail_list)
 
+        notes.loadNotesFromSP()
         for (note in notes.list) {
             val noteView = RemoteViews(context.packageName, R.layout.qs_detail_list_item)
             noteView.setTextViewText(R.id.qs_list_item_title, note.title)
@@ -94,7 +95,7 @@ class QSTile : TileService() {
             R.id.qs_detail_add,
             Utils.getPendingIntent(
                 context,
-                Notes.Note(notes.generateNewNoteID()),
+                Notes.Note(),
                 ActionReceiver.ACTION_EDIT
             )
         )

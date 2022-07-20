@@ -40,7 +40,7 @@ class Notes(val context: Context) {
         )
     }
 
-    class Note(id: Int) :
+    class Note(id: Int = -1) :
         Serializable {
         var title: String? = null
         var content: String? = null
@@ -57,17 +57,25 @@ class Notes(val context: Context) {
     var list: ArrayList<Note> = ArrayList()
 
     init {
+        loadNotesFromSP()
+        for (note in list) showNotification(note)
+    }
+
+    fun loadNotesFromSP() {
         list = Gson().fromJson(
             context.getSharedPreferences("sp", Context.MODE_PRIVATE).getString("notes", "[]"),
             object : TypeToken<ArrayList<Note>>() {}.type
         )
-        for (note in list) showNotification(note)
     }
 
-    fun saveNotesToSP() = context.getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
-        .putString("notes", Gson().toJson(list)).apply()
+    fun saveNotesToSP() {
+        context.getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
+            .putString("notes", Gson().toJson(list)).apply()
+    }
 
     fun saveNote(note: Note) {
+        loadNotesFromSP()
+        if (note.id == -1) note.id = generateNewNoteID()
         for (i in list.indices) {
             if (note.id == list[i].id) {
                 list[i] = note
@@ -82,6 +90,7 @@ class Notes(val context: Context) {
     }
 
     fun deleteNote(note: Note) {
+        loadNotesFromSP()
         for (i in list.indices) {
             if (note.id == list[i].id) {
                 list.removeAt(i)
@@ -92,7 +101,7 @@ class Notes(val context: Context) {
         }
     }
 
-    fun generateNewNoteID(): Int {
+    private fun generateNewNoteID(): Int {
         val takenIDs = list.stream().map { note -> note.id }.collect(Collectors.toList())
         var newID = 0
         while (takenIDs.contains(newID)) newID++
