@@ -57,26 +57,14 @@ class Dialog(private val context: Context, layoutRes: Int, note: Notes.Note, tit
 
     @SuppressLint("WrongConstant")
     fun closePanelAndUnlock() {
-        //unlock phone if locked
-        //if (isLocked) unlockAndRun(null)
+        //unlock phone
+        val intent = Intent(context, DummyActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
 
-
-        //close panel, won't work for A12+
-
+        //close panel
         context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
 
-        /*try {
-            Class.forName("android.app.StatusBarManager").getMethod("collapsePanels")
-                .invoke(context.getSystemService("statusbar"))
-        } catch (e: Exception) {
-            Log.e("closePanel", e.message.toString())
-            try {
-                context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
-            } catch (e: Exception) {
-                Log.e("closePanel", e.message.toString())
-                Toast.makeText(context, R.string.a12closePanel, Toast.LENGTH_SHORT).show()
-            }
-        }*/
-
+        //Class.forName("android.app.StatusBarManager").getMethod("collapsePanels").invoke(context.getSystemService("statusbar"))
     }
 }

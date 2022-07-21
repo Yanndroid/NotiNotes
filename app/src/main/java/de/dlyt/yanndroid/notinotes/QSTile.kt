@@ -42,7 +42,12 @@ class QSTile : TileService() {
     override fun onClick() {
         super.onClick()
         if (isLocked) unlockAndRun(null)
-        sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+        else {
+            val intent = Intent(context, DummyActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivityAndCollapse(intent)
+        }
+
         notes.editNotePopup(Notes.Note())
     }
 
