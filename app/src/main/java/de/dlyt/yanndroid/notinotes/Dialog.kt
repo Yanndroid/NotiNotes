@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.service.quicksettings.TileService
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +12,7 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
+
 
 class Dialog(private val context: Context, layoutRes: Int, note: Notes.Note, title: String?) {
     private val windowManager: WindowManager
@@ -63,7 +62,10 @@ class Dialog(private val context: Context, layoutRes: Int, note: Notes.Note, tit
 
 
         //close panel, won't work for A12+
-        try {
+
+        context.sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+
+        /*try {
             Class.forName("android.app.StatusBarManager").getMethod("collapsePanels")
                 .invoke(context.getSystemService("statusbar"))
         } catch (e: Exception) {
@@ -74,7 +76,7 @@ class Dialog(private val context: Context, layoutRes: Int, note: Notes.Note, tit
                 Log.e("closePanel", e.message.toString())
                 Toast.makeText(context, R.string.a12closePanel, Toast.LENGTH_SHORT).show()
             }
-        }
+        }*/
 
     }
 }

@@ -68,12 +68,12 @@ class Notes(val context: Context) {
         )
     }
 
-    fun saveNotesToSP() {
+    private fun saveNotesToSP() {
         context.getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
             .putString("notes", Gson().toJson(list)).apply()
     }
 
-    fun saveNote(note: Note) {
+    private fun saveNote(note: Note) {
         loadNotesFromSP()
         if (note.id == -1) note.id = generateNewNoteID()
         for (i in list.indices) {

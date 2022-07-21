@@ -39,13 +39,10 @@ class QSTile : TileService() {
         }
     }
 
-    /*override fun onDestroy() {
-        super.onDestroy()
-        notes.saveNotesToSP()
-    }*/
-
     override fun onClick() {
         super.onClick()
+        if (isLocked) unlockAndRun(null)
+        sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
         notes.editNotePopup(Notes.Note())
     }
 
