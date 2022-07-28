@@ -12,6 +12,7 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
+import androidx.picker.app.SeslColorPickerDialog
 
 class DialogActivity : AppCompatActivity() {
 
@@ -80,6 +81,16 @@ class DialogActivity : AppCompatActivity() {
         buttonNeutral.isGone = editMode
         findViewById<View>(R.id.sem_divider2).isGone = editMode
         findViewById<View>(R.id.sem_divider1).isVisible = true
+
+        colorPick.setOnClickListener {
+            SeslColorPickerDialog(
+                mContext,
+                { color ->
+                    note.color = color
+                    setColor(color)
+                }, note.color
+            ).show()
+        }
 
         if (editMode) {
             buttonNegative.apply {
