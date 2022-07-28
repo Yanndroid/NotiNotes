@@ -1,0 +1,13 @@
+<resources>
+    <string name="edit">Bearbeiten</string>
+    <string name="del">Löschen</string>
+    <string name="title">Titel</string>
+    <string name="note">Notiz</string>
+    <string name="new_note">Neue Notiz</string>
+    <string name="save">Speichern</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="notes">Notizen</string>
+    <string name="hide_on_lockscreen">Auf dem Sperrbildschrim ausblenden</string>
+    <string name="locked">In Benarichtigungen sperren</string>
+    <string name="saved_copy">Notiz als Copie gespeichert</string>
+</resources>

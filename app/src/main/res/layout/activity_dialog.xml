@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/sesl_dialog_title_padding_top">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="start|center"
+        android:orientation="horizontal"
+        android:paddingLeft="@dimen/sesl_dialog_padding_horizontal"
+        android:paddingRight="@dimen/sesl_dialog_padding_horizontal"
+        android:paddingBottom="@dimen/sesl_dialog_title_padding_bottom">
+
+        <ImageView
+            android:id="@+id/dialog_icon"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
+            android:layout_marginEnd="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_note" />
+
+        <TextView
+            android:id="@+id/dialog_title"
+            style="?android:attr/windowTitleStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAlignment="viewStart" />
+
+        <EditText
+            android:id="@+id/dialog_title_edit"
+            style="?android:attr/windowTitleStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:hint="@string/title"
+            android:maxLines="1"
+            android:textAlignment="viewStart"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/dialog_color_picker"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
+            android:layout_marginStart="8dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/color_dot" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/dialog_edit_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingVertical="10dp">
+
+        <CheckBox
+            android:id="@+id/dialog_check_hol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/sesl_dialog_padding_horizontal"
+            android:text="@string/hide_on_lockscreen" />
+
+        <CheckBox
+            android:id="@+id/dialog_check_lock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/sesl_dialog_padding_horizontal"
+            android:text="@string/locked" />
+
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingStart="@dimen/sesl_dialog_body_text_scroll_padding_start"
+        android:paddingEnd="@dimen/sesl_dialog_body_text_scroll_padding_end"
+
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/sesl_dialog_body_text_margin_start"
+            android:layout_marginEnd="@dimen/sesl_dialog_body_text_margin_end"
+            android:orientation="vertical">
+
+            <TextView
+                android:paddingBottom="@dimen/sesl_dialog_body_text_padding_bottom"
+                android:id="@+id/dialog_note"
+                style="?android:attr/textAppearance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="@dimen/sesl_dialog_body_text_line_spacing_extra"
+                android:textAlignment="viewStart" />
+
+            <EditText
+                android:paddingBottom="@dimen/sesl_dialog_body_text_padding_bottom"
+                android:id="@+id/dialog_note_edit"
+                style="?android:attr/textAppearance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                android:gravity="top|start"
+                android:hint="@string/note"
+                android:lineSpacingExtra="@dimen/sesl_dialog_body_text_line_spacing_extra"
+                android:minHeight="150dp"
+                android:textAlignment="viewStart"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+    <include
+        layout="@layout/sesl_alert_dialog_button_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+</LinearLayout>

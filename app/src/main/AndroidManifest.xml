@@ -3,18 +3,18 @@
     package="de.dlyt.yanndroid.notinotes">
 
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@style/MainTheme">
+        android:label="@string/app_name">
 
         <activity
-            android:theme="@style/Transparent"
-            android:name=".DummyActivity"
+            android:name=".DialogActivity"
             android:excludeFromRecents="true"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Transparent"
+            android:windowSoftInputMode="adjustResize" />
 
         <service
             android:name=".QSTile"
@@ -29,11 +29,18 @@
 
         <receiver
             android:name=".ActionReceiver"
-            android:exported="false">
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="de.dlyt.yanndroid.notinotes.EDIT" />
                 <action android:name="de.dlyt.yanndroid.notinotes.DELETE" />
                 <action android:name="de.dlyt.yanndroid.notinotes.SHOW" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
     </application>

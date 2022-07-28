@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:theme="@style/MainTheme">
+    android:theme="@style/Theme.AppCompat.DayNight">
 
     <Button
         android:id="@+id/qs_detail_add"
