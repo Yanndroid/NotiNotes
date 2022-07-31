@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">NotiNotes</string>
+    <string name="edit">Éditer</string>
+    <string name="del">Effacer</string>
+    <string name="title">Titre</string>
+    <string name="note">Note</string>
+    <string name="new_note">Nouvelle Note</string>
+    <string name="save">Sauvegarder</string>
+    <string name="cancel">Annuler</string>
+    <string name="notes">Notes</string>
+    <string name="hide_on_lockscreen">Masquer sur l\'écran de verrouillage</string>
+    <string name="locked">Verrouiller les notifications</string>
+    <string name="saved_copy">Note enregistrée en tant que copie</string>
+</resources>
