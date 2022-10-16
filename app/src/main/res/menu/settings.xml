@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/settings_hide"
+        android:checkable="true"
+        android:title="@string/hide_on_lockscreen" />
+    <item
+        android:id="@+id/settings_lock"
+        android:checkable="true"
+        android:title="@string/locked" />
+    <item
+        android:id="@+id/settings_group"
+        android:checkable="true"
+        android:title="@string/group" />
+    <item
+        android:id="@+id/settings_bg_tint"
+        android:checkable="true"
+        android:title="@string/background_tint" />
+    <item
+        android:id="@+id/settings_del_confirm"
+        android:checkable="true"
+        android:title="@string/confirm_delete"
+        android:visible="false" />
+</menu>

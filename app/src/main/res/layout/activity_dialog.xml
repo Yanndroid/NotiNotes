@@ -42,8 +42,18 @@
             android:ellipsize="end"
             android:hint="@string/title"
             android:maxLines="1"
-            android:textAlignment="viewStart"
-            android:visibility="gone" />
+            android:textAlignment="viewStart" />
+
+        <ImageView
+            android:id="@+id/dialog_settings"
+            android:layout_width="32dip"
+            android:layout_height="32dip"
+            android:layout_marginStart="8dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_settings" />
 
         <ImageView
             android:id="@+id/dialog_color_picker"
@@ -58,36 +68,13 @@
 
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/dialog_edit_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingVertical="10dp">
-
-        <CheckBox
-            android:id="@+id/dialog_check_hol"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/sesl_dialog_padding_horizontal"
-            android:text="@string/hide_on_lockscreen" />
-
-        <CheckBox
-            android:id="@+id/dialog_check_lock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="@dimen/sesl_dialog_padding_horizontal"
-            android:text="@string/locked" />
-
-    </LinearLayout>
-
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="10dp"
         android:layout_weight="1"
         android:paddingStart="@dimen/sesl_dialog_body_text_scroll_padding_start"
         android:paddingEnd="@dimen/sesl_dialog_body_text_scroll_padding_end"
-
         android:scrollbarStyle="outsideOverlay"
         android:scrollbars="vertical">
 
@@ -99,16 +86,15 @@
             android:orientation="vertical">
 
             <TextView
-                android:paddingBottom="@dimen/sesl_dialog_body_text_padding_bottom"
                 android:id="@+id/dialog_note"
                 style="?android:attr/textAppearance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:lineSpacingExtra="@dimen/sesl_dialog_body_text_line_spacing_extra"
+                android:paddingBottom="@dimen/sesl_dialog_body_text_padding_bottom"
                 android:textAlignment="viewStart" />
 
             <EditText
-                android:paddingBottom="@dimen/sesl_dialog_body_text_padding_bottom"
                 android:id="@+id/dialog_note_edit"
                 style="?android:attr/textAppearance"
                 android:layout_width="match_parent"
@@ -118,6 +104,7 @@
                 android:hint="@string/note"
                 android:lineSpacingExtra="@dimen/sesl_dialog_body_text_line_spacing_extra"
                 android:minHeight="150dp"
+                android:paddingBottom="@dimen/sesl_dialog_body_text_padding_bottom"
                 android:textAlignment="viewStart"
                 android:visibility="gone" />
 

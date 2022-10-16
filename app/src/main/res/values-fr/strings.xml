@@ -9,6 +9,9 @@
     <string name="cancel">Annuler</string>
     <string name="notes">Notes</string>
     <string name="hide_on_lockscreen">Masquer sur l\'écran de verrouillage</string>
-    <string name="locked">Verrouiller les notifications</string>
+    <string name="locked">Verrouiller dans les notifications</string>
     <string name="saved_copy">Note enregistrée en tant que copie</string>
+    <string name="group">Grouper</string>
+    <string name="background_tint">" Teinter le fond"</string>
+    <string name="confirm_delete">Confirmer la suppression</string>
 </resources>

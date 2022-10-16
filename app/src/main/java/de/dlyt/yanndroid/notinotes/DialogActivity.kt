@@ -7,12 +7,18 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MenuItem
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.picker.app.SeslColorPickerDialog
+
 
 class DialogActivity : AppCompatActivity() {
 
@@ -25,9 +31,7 @@ class DialogActivity : AppCompatActivity() {
     private lateinit var titleText: TextView
     private lateinit var titleEdit: TextView
     private lateinit var colorPick: ImageView
-    private lateinit var editLayout: LinearLayout
-    private lateinit var checkHOL: CheckBox
-    private lateinit var checkLock: CheckBox
+    private lateinit var settings: ImageView
     private lateinit var noteText: TextView
     private lateinit var noteEdit: TextView
     private lateinit var buttonNeutral: Button
@@ -50,10 +54,7 @@ class DialogActivity : AppCompatActivity() {
         titleText = findViewById<TextView?>(R.id.dialog_title).apply { text = mNote.title }
         titleEdit = findViewById<TextView?>(R.id.dialog_title_edit).apply { text = mNote.title }
         colorPick = findViewById(R.id.dialog_color_picker)
-        editLayout = findViewById(R.id.dialog_edit_layout)
-        checkHOL = findViewById<CheckBox?>(R.id.dialog_check_hol).apply { isChecked = mNote.secret }
-        checkLock =
-            findViewById<CheckBox?>(R.id.dialog_check_lock).apply { isChecked = mNote.locked }
+        settings = findViewById(R.id.dialog_settings)
         noteText = findViewById<TextView?>(R.id.dialog_note).apply { text = mNote.content }
         noteEdit = findViewById<TextView?>(R.id.dialog_note_edit).apply { text = mNote.content }
         buttonNeutral = findViewById(android.R.id.button3)
@@ -75,24 +76,50 @@ class DialogActivity : AppCompatActivity() {
         titleText.isGone = editMode
         titleEdit.isGone = !editMode
         colorPick.isGone = !editMode
-        editLayout.isGone = !editMode
+        settings.isGone = !editMode
         noteText.isGone = editMode
         noteEdit.isGone = !editMode
         buttonNeutral.isGone = editMode
         findViewById<View>(R.id.sem_divider2).isGone = editMode
         findViewById<View>(R.id.sem_divider1).isVisible = true
 
-        colorPick.setOnClickListener {
-            SeslColorPickerDialog(
-                mContext,
-                { color ->
-                    note.color = color
-                    setColor(color)
-                }, note.color
-            ).show()
-        }
 
         if (editMode) {
+            colorPick.setOnClickListener {
+                SeslColorPickerDialog(
+                    mContext,
+                    { color ->
+                        note.color = color
+                        setColor(color)
+                    }, note.color
+                ).show()
+            }
+
+            val popmenu = PopupMenu(mContext, settings)
+            popmenu.seslSetOffset(0, -300)
+            popmenu.menuInflater.inflate(R.menu.settings, popmenu.menu)
+            popmenu.menu.let {
+                it.findItem(R.id.settings_hide).isChecked = note.secret
+                it.findItem(R.id.settings_lock).isChecked = note.locked
+                it.findItem(R.id.settings_group).isChecked = note.group
+                it.findItem(R.id.settings_bg_tint).isChecked = note.bg_tint
+                it.findItem(R.id.settings_del_confirm).isChecked = note.del_confirm
+            }
+            popmenu.setOnMenuItemClickListener { item: MenuItem ->
+                item.isChecked = !item.isChecked
+                when (item.itemId) {
+                    R.id.settings_hide -> note.secret = item.isChecked
+                    R.id.settings_lock -> note.locked = item.isChecked
+                    R.id.settings_group -> note.group = item.isChecked
+                    R.id.settings_bg_tint -> note.bg_tint = item.isChecked
+                    R.id.settings_del_confirm -> note.del_confirm = item.isChecked
+                }
+                item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW)
+                item.actionView = View(mContext)
+                false
+            }
+            settings.setOnClickListener { popmenu.show() }
+
             buttonNegative.apply {
                 setText(R.string.cancel)
                 setOnClickListener {
@@ -107,14 +134,13 @@ class DialogActivity : AppCompatActivity() {
                     Notes.saveNote(mContext, note.apply {
                         title = titleEdit.text.toString()
                         content = noteEdit.text.toString()
-                        secret = checkHOL.isChecked
-                        locked = checkLock.isChecked
                     })
                     mEditMode = false
                     finish()
                 }
             }
         } else {
+            noteText.setOnClickListener { setLayout(note, true) }
             buttonNeutral.apply {
                 setText(R.string.cancel)
                 setOnClickListener { finish() }
@@ -164,8 +190,6 @@ class DialogActivity : AppCompatActivity() {
                 id = Notes.generateNewNoteID(mContext)
                 title = titleEdit.text.toString()
                 content = noteEdit.text.toString()
-                secret = checkHOL.isChecked
-                locked = checkLock.isChecked
             })
             Toast.makeText(mContext, R.string.saved_copy, Toast.LENGTH_SHORT).show()
         }

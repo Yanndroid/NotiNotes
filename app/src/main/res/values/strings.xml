@@ -11,4 +11,7 @@
     <string name="hide_on_lockscreen">Hide on Lockscreen</string>
     <string name="locked">Lock in Notifications</string>
     <string name="saved_copy">Note saved as copy</string>
+    <string name="group">Group</string>
+    <string name="background_tint">Background tint</string>
+    <string name="confirm_delete">Confirm delete</string>
 </resources>

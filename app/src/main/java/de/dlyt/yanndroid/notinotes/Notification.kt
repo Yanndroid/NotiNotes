@@ -3,8 +3,12 @@ package de.dlyt.yanndroid.notinotes
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.res.Configuration
+import android.graphics.Color
+import android.view.LayoutInflater
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.graphics.ColorUtils
 
 
 class Notification {
@@ -36,42 +40,73 @@ class Notification {
                     .setGroupSummary(true)
                     .build()
             )
-            nmc.notify(
-                note.id, NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
-                    .setStyle(NotificationCompat.BigTextStyle())
-                    .setOngoing(note.locked)
-                    .setVisibility(if (note.secret) NotificationCompat.VISIBILITY_SECRET else NotificationCompat.VISIBILITY_PUBLIC)
-                    .setGroup(NOTIFICATION_GROUP)
-                    .setSmallIcon(R.drawable.ic_note)
-                    .setContentTitle(note.title)
-                    .setContentText(note.content)
-                    .addAction(
-                        R.drawable.ic_edit,
-                        context.getString(R.string.edit),
-                        ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_EDIT)
+            val notiBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+                .setStyle(NotificationCompat.BigTextStyle())
+                .setOngoing(note.locked)
+                .setVisibility(if (note.secret) NotificationCompat.VISIBILITY_SECRET else NotificationCompat.VISIBILITY_PUBLIC)
+                .setSmallIcon(R.drawable.ic_note)
+                .setContentTitle(note.title)
+                .setContentText(note.content)
+                .addAction(
+                    R.drawable.ic_edit,
+                    context.getString(R.string.edit),
+                    ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_EDIT)
+                )
+                .addAction(
+                    R.drawable.ic_delete,
+                    context.getString(R.string.del),
+                    ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_DELETE)
+                )
+                .setContentIntent(
+                    ActionReceiver.getPendingIntent(
+                        context,
+                        note,
+                        ActionReceiver.ACTION_SHOW
                     )
-                    .addAction(
-                        R.drawable.ic_delete,
-                        context.getString(R.string.del),
-                        ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_DELETE)
+                )
+                .setDeleteIntent(
+                    ActionReceiver.getPendingIntent(
+                        context,
+                        note,
+                        ActionReceiver.ACTION_DELETE
                     )
-                    .setContentIntent(
-                        ActionReceiver.getPendingIntent(
-                            context,
-                            note,
-                            ActionReceiver.ACTION_SHOW
+                )
+                .setColor(note.color)
+
+            if (note.group) notiBuilder.setGroup(NOTIFICATION_GROUP)
+
+            if (note.bg_tint) {
+                val darkMode =
+                    context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+                val blendColor = if (darkMode) Color.BLACK else Color.WHITE
+                notiBuilder.setContent(
+                    notiBuilder.createContentView()!!.also {
+                        it.setInt(
+                            LayoutInflater.from(context).inflate(it.layoutId, null).id,
+                            "setBackgroundColor",
+                            ColorUtils.blendARGB(
+                                note.color,
+                                blendColor,
+                                if (darkMode) 0.5f else 0.3f
+                            )
                         )
-                    )
-                    .setDeleteIntent(
-                        ActionReceiver.getPendingIntent(
-                            context,
-                            note,
-                            ActionReceiver.ACTION_DELETE
+                    })
+                notiBuilder.setCustomBigContentView(
+                    notiBuilder.createBigContentView()!!.also {
+                        it.setInt(
+                            LayoutInflater.from(context).inflate(it.layoutId, null).id,
+                            "setBackgroundColor",
+                            ColorUtils.blendARGB(
+                                note.color,
+                                blendColor,
+                                if (darkMode) 0.3f else 0.1f
+                            )
                         )
-                    )
-                    .setColor(note.color)
-                    .build()
-            )
+                    })
+            }
+
+            nmc.notify(note.id, notiBuilder.build())
+
         }
 
         fun cancel(context: Context, note: Notes.Note) {

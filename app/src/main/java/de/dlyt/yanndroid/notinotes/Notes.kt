@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import java.io.Serializable
 import java.util.stream.Collectors
 
+
 class Notes {
 
     class Note(id: Int = -1) :
@@ -17,6 +18,9 @@ class Notes {
         var id: Int = -1
         var secret: Boolean = false
         var locked: Boolean = true
+        var group: Boolean = true
+        var bg_tint: Boolean = true
+        var del_confirm: Boolean = false
 
         init {
             this.id = id

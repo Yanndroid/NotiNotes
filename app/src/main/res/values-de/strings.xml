@@ -9,5 +9,8 @@
     <string name="notes">Notizen</string>
     <string name="hide_on_lockscreen">Auf dem Sperrbildschrim ausblenden</string>
     <string name="locked">In Benarichtigungen sperren</string>
-    <string name="saved_copy">Notiz als Copie gespeichert</string>
+    <string name="saved_copy">Notiz als Kopie gespeichert</string>
+    <string name="group">Gruppieren</string>
+    <string name="background_tint">Hintergrund färben</string>
+    <string name="confirm_delete">Löschen bestätigen</string>
 </resources>
