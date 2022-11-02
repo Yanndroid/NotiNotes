@@ -11,7 +11,7 @@ import kotlin.math.min
 
 class Notes {
 
-    class Note(id: Int = -1) :
+    class Note :
         Serializable {
         var title: String? = null
         var content: String? = null
@@ -22,10 +22,6 @@ class Notes {
         var group: Boolean = true
         var bg_tint: Boolean = true
         var del_confirm: Boolean = false
-
-        init {
-            this.id = id
-        }
     }
 
     companion object {
@@ -41,6 +37,8 @@ class Notes {
         }
 
         fun saveNote(context: Context, note: Note) {
+            saveDefaultSetting(context, note)
+
             val list = getNotes(context)
             if (note.id == -1) note.id = generateNewNoteID(list)
             for (i in list.indices) {
@@ -77,6 +75,26 @@ class Notes {
             return newID
         }
 
+        fun defaultSettingNote(context: Context): Note {
+            val json =
+                context.getSharedPreferences("sp", Context.MODE_PRIVATE).getString("default", null)
+            return if (json == null) Note() else Gson().fromJson(
+                json,
+                object : TypeToken<Note>() {}.type
+            )
+        }
+
+        private fun saveDefaultSetting(context: Context, note: Note) {
+            val default = Note()
+            default.secret = note.secret
+            default.locked = note.locked
+            default.group = note.group
+            default.bg_tint = note.bg_tint
+            default.del_confirm = note.del_confirm
+
+            context.getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
+                .putString("default", Gson().toJson(default)).apply()
+        }
 
         fun getRecentColors(context: Context): IntArray = Gson().fromJson(
             context.getSharedPreferences("sp", Context.MODE_PRIVATE)

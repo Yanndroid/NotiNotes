@@ -30,7 +30,7 @@ class QSTile : TileService() {
         val dialogIntent = Intent(context, DialogActivity::class.java)
         dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         dialogIntent.action = ActionReceiver.ACTION_EDIT
-        dialogIntent.putExtra(ActionReceiver.EXTRA_NOTE, Notes.Note())
+        dialogIntent.putExtra(ActionReceiver.EXTRA_NOTE, Notes.defaultSettingNote(context))
         startActivityAndCollapse(dialogIntent)
     }
 
@@ -72,7 +72,7 @@ class QSTile : TileService() {
             R.id.qs_detail_add,
             ActionReceiver.getPendingIntent(
                 context,
-                Notes.Note(),
+                Notes.defaultSettingNote(context),
                 ActionReceiver.ACTION_EDIT
             )
         )
