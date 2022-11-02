@@ -6,6 +6,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.Serializable
 import java.util.stream.Collectors
+import kotlin.math.min
 
 
 class Notes {
@@ -75,6 +76,27 @@ class Notes {
             while (takenIDs.contains(newID)) newID++
             return newID
         }
+
+
+        fun getRecentColors(context: Context): IntArray = Gson().fromJson(
+            context.getSharedPreferences("sp", Context.MODE_PRIVATE)
+                .getString("colors", "[]"),
+            object : TypeToken<IntArray>() {}.type
+        )
+
+        fun saveRecentColor(context: Context, colors: IntArray, newColor: Int) {
+            val merged: IntArray = if (colors.isNotEmpty() && newColor == colors[0]) {
+                colors
+            } else {
+                val result = colors.toMutableList()
+                result.add(0, newColor)
+                result.subList(0, min(colors.size + 1, 6)).toIntArray()
+            }
+
+            context.getSharedPreferences("sp", Context.MODE_PRIVATE).edit()
+                .putString("colors", Gson().toJson(merged)).apply()
+        }
+
     }
 
 }

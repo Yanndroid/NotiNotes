@@ -14,10 +14,11 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import androidx.picker.app.SeslColorPickerDialog
+import androidx.picker3.app.SeslColorPickerDialog
 
 
 class DialogActivity : AppCompatActivity() {
@@ -86,12 +87,15 @@ class DialogActivity : AppCompatActivity() {
 
         if (editMode) {
             colorPick.setOnClickListener {
+                val rColors = Notes.getRecentColors(mContext)
+
                 SeslColorPickerDialog(
-                    mContext,
+                    ContextThemeWrapper(mContext, R.style.ColorDialogWidthFix),
                     { color ->
                         note.color = color
                         setColor(color)
-                    }, note.color
+                        Notes.saveRecentColor(mContext, rColors, color)
+                    }, note.color, rColors, false
                 ).show()
             }
 
