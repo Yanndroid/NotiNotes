@@ -2,7 +2,9 @@ package de.dlyt.yanndroid.notinotes
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.view.LayoutInflater
@@ -50,7 +52,7 @@ class Notification {
                 .addAction(
                     R.drawable.ic_edit,
                     context.getString(R.string.edit),
-                    ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_EDIT)
+                    getPendingIntentActivity(context, note, ActionReceiver.ACTION_EDIT)
                 )
                 .addAction(
                     R.drawable.ic_delete,
@@ -58,7 +60,7 @@ class Notification {
                     ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_DELETE)
                 )
                 .setContentIntent(
-                    ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_SHOW)
+                    getPendingIntentActivity(context, note, ActionReceiver.ACTION_SHOW)
                 )
                 .setDeleteIntent(
                     ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_DISMISS)
@@ -114,6 +116,19 @@ class Notification {
                     context.getString(R.string.notes),
                     NotificationManager.IMPORTANCE_LOW
                 )
+            )
+        }
+
+        private fun getPendingIntentActivity(context: Context, note: Notes.Note, action: String): PendingIntent {
+            val intent = Intent(context, DialogActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.action = action
+            intent.putExtra(ActionReceiver.EXTRA_NOTE, note)
+            return PendingIntent.getActivity(
+                context,
+                note.id,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
         }
 

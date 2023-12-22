@@ -55,9 +55,12 @@ class DialogActivity : AppCompatActivity() {
             }
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        try {
             sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+        } catch (e: SecurityException) {
+            e.printStackTrace()
         }
+
         mKeyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         mKeyguardManager.requestDismissKeyguard(this, null)
 

@@ -19,14 +19,18 @@ android {
         applicationId "de.dlyt.yanndroid.notinotes"
         minSdk 26
         targetSdk 34
-        versionCode 13
-        versionName "1.7.2"
+        versionCode 14
+        versionName "1.7.3"
 
         resConfigs locales
     }
 
     buildTypes {
         release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
