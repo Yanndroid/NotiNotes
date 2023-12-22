@@ -58,18 +58,10 @@ class Notification {
                     ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_DELETE)
                 )
                 .setContentIntent(
-                    ActionReceiver.getPendingIntent(
-                        context,
-                        note,
-                        ActionReceiver.ACTION_SHOW
-                    )
+                    ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_SHOW)
                 )
                 .setDeleteIntent(
-                    ActionReceiver.getPendingIntent(
-                        context,
-                        note,
-                        ActionReceiver.ACTION_DELETE
-                    )
+                    ActionReceiver.getPendingIntent(context, note, ActionReceiver.ACTION_DISMISS)
                 )
                 .setColor(note.color)
 

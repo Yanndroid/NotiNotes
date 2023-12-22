@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="de.dlyt.yanndroid.notinotes">
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.BROADCAST_CLOSE_SYSTEM_DIALOGS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -13,6 +18,7 @@
             android:name=".DialogActivity"
             android:excludeFromRecents="true"
             android:exported="false"
+            android:noHistory="true"
             android:theme="@style/Transparent"
             android:windowSoftInputMode="adjustResize" />
 
@@ -34,6 +40,7 @@
             <intent-filter>
                 <action android:name="de.dlyt.yanndroid.notinotes.EDIT" />
                 <action android:name="de.dlyt.yanndroid.notinotes.DELETE" />
+                <action android:name="de.dlyt.yanndroid.notinotes.DISMISS" />
                 <action android:name="de.dlyt.yanndroid.notinotes.SHOW" />
             </intent-filter>
             <intent-filter>

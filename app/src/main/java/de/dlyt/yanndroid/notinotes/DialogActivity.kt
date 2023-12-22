@@ -3,7 +3,9 @@ package de.dlyt.yanndroid.notinotes
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -47,7 +49,15 @@ class DialogActivity : AppCompatActivity() {
         setContentView(R.layout.activity_dialog)
         window.setGravity(Gravity.BOTTOM)
 
-        sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_DENIED) {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
+            }
+        }
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            sendBroadcast(Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS))
+        }
         mKeyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         mKeyguardManager.requestDismissKeyguard(this, null)
 

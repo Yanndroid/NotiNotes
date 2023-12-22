@@ -1,5 +1,6 @@
 package de.dlyt.yanndroid.notinotes
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -31,7 +32,18 @@ class QSTile : TileService() {
         dialogIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         dialogIntent.action = ActionReceiver.ACTION_EDIT
         dialogIntent.putExtra(ActionReceiver.EXTRA_NOTE, Notes.defaultSettingNote(context))
-        startActivityAndCollapse(dialogIntent)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            val pendingDialogIntent = PendingIntent.getActivity(
+                context,
+                0,
+                dialogIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            startActivityAndCollapse(pendingDialogIntent)
+        } else {
+            startActivityAndCollapse(dialogIntent)
+        }
     }
 
     /** #### Detail view (samsung only) #### **/
